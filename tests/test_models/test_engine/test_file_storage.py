@@ -15,7 +15,7 @@ from models.engine.file_storage import FileStorage
 
 
 class TestFileStorage(unittest.TestCase):
-    '''this will test FileStorage'''
+    '''this will test the FileStorage'''
 
     @classmethod
     def setUpClass(cls):
@@ -28,7 +28,7 @@ class TestFileStorage(unittest.TestCase):
 
     @classmethod
     def teardown(cls):
-        """After the test this will tear it down"""
+        """at the end of the test this will tear it down"""
         del cls.user
 
     def tearDown(self):
