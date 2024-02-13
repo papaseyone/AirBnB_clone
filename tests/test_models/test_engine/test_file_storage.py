@@ -1,74 +1,96 @@
 #!/usr/bin/python3
-"""
-Unittest tests for the FileStorage Class
-"""
+"""test for file storage"""
 import unittest
+import pep8
 import json
-import models
+import os
 from models.base_model import BaseModel
+from models.user import User
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
 from models.engine.file_storage import FileStorage
 
 
-class TestFileStorage_instant(unittest.TestCase):
-    """
-    Testing instantiation of the FileStorage class.
-    """
+class TestFileStorage(unittest.TestCase):
+    '''this will test FileStorage'''
 
-    def test_FStorage_instant_with_no_args(self):
-        self.assertEqual(type(FileStorage()), FileStorage)
+    @classmethod
+    def setUpClass(cls):
+        """set up for test"""
+        cls.user = User()
+        cls.user.first_name = "Pica"
+        cls.user.last_name = "Chu"
+        cls.user.email = "1234@yahoo.com"
+        cls.storage = FileStorage()
 
-    def test_FStorage_instant_with_arg(self):
-        with self.assertRaises(TypeError):
-            FileStorage(None)
+    @classmethod
+    def teardown(cls):
+        """After the test this will tear it down"""
+        del cls.user
 
-    def test_file_path_is_private_str(self):
-        self.assertEqual(str, type(FileStorage._FileStorage__file_path))
+    def tearDown(self):
+        """teardown"""
+        try:
+            os.remove("file.json")
+        except Exception:
+            pass
 
-    def test_objects_is_private_dict(self):
-        self.assertEqual(dict, type(FileStorage._FileStorage__objects))
+    def test_pep8_FileStorage(self):
+        """Tests pep8 style"""
+        style = pep8.StyleGuide(quiet=True)
+        p = style.check_files(['models/engine/file_storage.py'])
+        self.assertEqual(p.total_errors, 0, "fix pep8")
 
-    def test_storage_initializing(self):
-        self.assertEqual(type(models.storage), FileStorage)
+    def test_all(self):
+        """tests if all works in File Storage"""
+        storage = FileStorage()
+        obj = storage.all()
+        self.assertIsNotNone(obj)
+        self.assertEqual(type(obj), dict)
+        self.assertIs(obj, storage._FileStorage__objects)
 
-    def test_initialization(self):
-        self.assertIsInstance(self.storage, FileStorage)
+    def test_new(self):
+        """test when new is created"""
+        storage = FileStorage()
+        obj = storage.all()
+        user = User()
+        user.id = 123455
+        user.name = "Aiko"
+        storage.new(user)
+        key = user.__class__.__name__ + "." + str(user.id)
+        self.assertIsNotNone(obj[key])
 
-    def test_new_and_all_methods(self):
-        # Create a dummy object
-        dummy_obj = {'__class__': 'BaseModel', 'id': 'test_id'}
-        self.storage.new(dummy_obj)
-
-        # Check if the dummy object is in the storage
-        objects = self.storage.all()
-        self.assertIn('BaseModel.test_id', objects)
-
-    def test_save_and_reload(self):
-        # Create a dummy object
-        dummy_obj = {'__class__': 'BaseModel', 'id': 'test_id'}
-        self.storage.new(dummy_obj)
-
-        # Save and reload the storage
+    def test_reload_filestorage(self):
+        """
+        tests reload
+        """
         self.storage.save()
-        self.storage.reload()
-
-        # Check if the reloaded storage contains the dummy object
-        objects = self.storage.all()
-        self.assertIn('BaseModel.test_id', objects)
-
-    def test_save_and_reload_file(self):
-        # Create a dummy object
-        dummy_obj = {'__class__': 'BaseModel', 'id': 'test_id'}
-        self.storage.new(dummy_obj)
-
-        # Save and reload the storage
+        Root = os.path.dirname(os.path.abspath("console.py"))
+        path = os.path.join(Root, "file.json")
+        with open(path, 'r') as f:
+            lines = f.readlines()
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
         self.storage.save()
-        self.storage.reload()
+        with open(path, 'r') as f:
+            lines2 = f.readlines()
+        self.assertEqual(lines, lines2)
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
+        with open(path, "w") as f:
+            f.write("{}")
+        with open(path, "r") as r:
+            for line in r:
+                self.assertEqual(line, "{}")
+        self.assertIs(self.storage.reload(), None)
 
-        # Check if the content of the reloaded file matches the dummy object
-        with open(self.temp_file_path, 'r') as file:
-            data = json.load(file)
-            self.assertIn('BaseModel.test_id', data)
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
